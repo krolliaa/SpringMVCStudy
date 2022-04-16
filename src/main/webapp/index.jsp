@@ -4,6 +4,8 @@
     <title>Title</title>
 </head>
 <body>
-<h3><a href="http://localhost:8080/user/some1.do"> 点击访问 some1.do </a></h3>
+<%--<h3><a href="http://localhost:8080/user/some1.do"> 点击访问 some1.do </a></h3>--%>
+<%--<h3><a href="http://localhost:8080/user/some2.do"> 点击访问 some1.do </a></h3>--%>
+<h3><a href="http://localhost:8080/user/some3.do?name=zhangsan&age=12"> 点击访问 some3.do 并附带参数</a></h3>
 </body>
 </html>
