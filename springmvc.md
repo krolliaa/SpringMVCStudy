@@ -877,3 +877,24 @@ public String doSomeString() {
 
 可以看到前端页面返回的中文是乱码的，需要在控制器类方法设置下`MIME: Content-Type: text/plain;charset=utf-8;`
 
+### 4.4 解读`url-pattern`
+
+在`Apache Tomcat`的`conf`目录下的`web.xml`中可以发现有一个名为`DefaultServlet`，并且可以看到`<load-on-startup>1</load-on-startup>`表示在`Tomcat`服务器启动时就创建，`DefaultServlet`时用来请求静态资源和没有映射给`DispatcherServlet`的其它`Servlet`请求。
+
+当我们在`web.xml`下设置的`url-pattern`为`/`时，此时所有的请求包括静态资源的请求都会交给`DispatcherServlet`来管控，这样一来静态资源和没有映射的请求就无法自动访问了，这也是为什么之前在使用`jQuery`的时候，我引入本地的资源无法导入，后面是使用在线的`jQuery`资源。所以为了避免这些动态资源和没有添加映射的路径无法自动访问，我们可以做一下设置：【在`SpringMVCApplicationContext.xml`配置文件配置】
+
+1. 我们可以将没有设置映射的请求以及静态资源都交给`Tomcat`的默认`Servlet - DefaultServlet`
+
+   ```xml
+   <mvc:default-servlet-handler>
+   ```
+
+2. 声明资源所在地址，现在不是无法处理静态资源的`URL`路径吗？那我就亲自告诉你这个资源在哪个位置，你要获取静态资源你就从这里去获取，`location`代表静态资源所在的目录，注意不要将静态资源放在`/WEB-INF`目录下，因为该目录时安全路径外界是无法直接访问的，`mapping`可以简单理解为访问的请求`url`路径
+
+   ```xml
+   <mvc:resources location = "/images/", mapping = "/images/**"/>
+   ```
+
+除此之外顺带提一下，就如`4.3`中返回数据类型看到的一样，如果需要返回的是`json`格式的数据，需要添加：`<mvc:annotation-driven/>`
+
+只要添加上了`DefaultServlet`，测试后发现可以直接访问本地的`jQuery`资源，怪不得之前一直无法访问...

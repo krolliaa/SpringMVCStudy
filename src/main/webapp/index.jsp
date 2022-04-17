@@ -2,7 +2,8 @@
 <html>
 <head>
     <title>Title</title>
-    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>
+    <%--<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>--%>
+    <script src="js/jquery341.js"></script>
     <script type="text/javascript">
         $(function () {
             $("#btn").click(function () {
