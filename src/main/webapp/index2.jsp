@@ -7,15 +7,17 @@
         $(function () {
             $("#btn").click(function () {
                 $.ajax({
-                    url: "user/some12.do",
+                    url: "user/some11.do",
                     data: {
                         name: "smith",
                         age: 18
                     },
                     type: "post",
-                    dataType: "text",
+                    dataType: "json",
                     success: function (data) {
-                        alert(data)
+                        $.each(data, function (i, n) {
+                            alert(n.name + "---" + n.age)
+                        })
                     }
                 })
             })
