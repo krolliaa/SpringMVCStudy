@@ -289,7 +289,7 @@ public class MyController1 {
 }
 ```
 
-### 4.2 接收请求参数
+### 3.2 接收请求参数
 
 处理器方法可以包含以下参数：`HttpServletRequest`以及`HttpServletResponse`还有`HttpSession`直接获取想要的参数即可：
 
@@ -318,7 +318,7 @@ public class MyController2 {
 }
 ```
 
-#### 4.2.1 逐个接收用户提交的参数
+#### 3.2.1 逐个接收用户提交的参数
 
 直接在控制器方法的形参中写入数据类型和参数，则`SpringMVC`会自动通过`HttpServletRequest`来获取参数，并且最开始获取的都是字符串值，然后会将字符串转化为参数里的数据类型，这就有可能引发一种错误：用户输入的数据类型不是控制器方法参数指定的数据类型，就会显示`400`错误提示，表示服务器接收请求错误即请求无效。因为存在数据类型转换错误：`valueOf(str)`若`str`不正确比如说是一个`null`或者违法的`str`数据转换成`int`类型，所以可以将形参中的`int`类型转换成包装类即`Integer`即可解决问题：发生错误并不会在控制台显示错误信息，而是将错误写进`SpringMVC`里头，所以如果发生错误只会显示错误，对程序无影响
 
@@ -347,7 +347,7 @@ public class MyController3 {
 }
 ```
 
-##### 4.2.1.1 解决`POST`请求中文乱码的问题
+##### 3.2.1.1 解决`POST`请求中文乱码的问题
 
 可以注册声明一个过滤器，凡是请求都要经过这个过滤器，所以设置编码解决乱码问题就可以放在字符编码过滤器里头去完成操作。在`web.xml`注册声明字符编码过滤器并且配置好参数数据：`encoding forceRequestEncoding forceResponseEncoding`，关于`forceRequestEncoding`和`ForceResponseEncoding`参数数据在`CharacterEncodingFilter`类源码可以看到。
 
@@ -443,7 +443,7 @@ public class MyController4 {
 </html>
 ```
 
-##### 4.2.1.2 解决请求参数和控制器方法形参参数名字不一致问题
+##### 3.2.1.2 解决请求参数和控制器方法形参参数名字不一致问题
 
 形参是`name`但是传递进来的参数名是`rName`，`age`同理，使用`@RequestParam`即可解决，该注解有两个属性：1.`value`：表示需要与请求过来的参数保持一致的名称 2.`required`：表示该请求参数是否必须有值，若必须有但请求中没有就会报错，报`400`错误，默认`@RequestParam`的`required`属性为`true`，直接访问时不带参数将报错
 
@@ -495,7 +495,7 @@ public class MyController5 {
 </html>
 ```
 
-#### 4.2.2 对象接收用户提交的参数
+#### 3.2.2 对象接收用户提交的参数
 
 逐个接收用户提交的参数时，参数的数量少还好处理，但是如果参数的数量多了起来就不好解决了，`SpringMVC`可以使用对象接收参数。`SpringMVC`会自动赋值给对象：【`@RequestParam`不能用于对象参数中，因为无效】
 
@@ -553,11 +553,11 @@ public class MyController6 {
 </html>
 ```
 
-### 4.3 处理器方法的返回值
+### 3.3 处理器方法的返回值
 
 处理器方法返回值有四大类：`void String Object ModelAndView`
 
-#### 4.3.1 `ModelAndView`
+#### 3.3.1 `ModelAndView`
 
 若处理器方法处理完毕之后，需要进行资源跳转并且在资源间传递数据，那么使用`ModelAndView`就非常合适，但是如果只是单纯的跳转并没有传递数据，或者有传递数据但是并没有发生资源跳转，比如`Ajax`请求，此时使用`ModelAndView`就不合适，因为这样就有`Model`数据多余或者是`View`视图多余了。
 
@@ -634,7 +634,7 @@ public class MyController7 {
 </html>
 ```
 
-#### 4.3.2 `String`
+#### 3.3.2 `String`
 
 若处理器方法处理完毕之后需要资源跳转但是资源之间不需要传递数据，也就是说只有视图`View`没有数据`Model`。如果你想传递数据可以使用`HttpServletResponse`
 
@@ -730,7 +730,7 @@ public class MyController7 {
 }
 ```
 
-#### 4.3.3 `void`
+#### 3.3.3 `void`
 
 `void`既不表示数据`Model`也不表示视图`view`，常用于`Ajax`请求当中。模拟`Ajax`：
 
@@ -922,7 +922,7 @@ public class MyController7 {
    }
    ```
 
-#### 4.3.4 `Object`
+#### 3.3.4 `Object`
 
 返回值数据类型为`object`代表的是`Model`，不返回视图。如果要返回的`String`类型的数据但是返回值也是`String`可以加一个`@ResponseBody`注解，可以适用对象表示的数据响应`Ajax`请求。在`void`已经加入过依赖了所以这里不在赘述。
 
@@ -1168,7 +1168,7 @@ public String doSomeString() {
 
 可以看到前端页面返回的中文是乱码的，需要在控制器类方法设置下`MIME: Content-Type: text/plain;charset=utf-8;`
 
-### 4.4 解读`url-pattern`
+### 3.4 解读`url-pattern`
 
 在`Apache Tomcat`的`conf`目录下的`web.xml`中可以发现有一个名为`DefaultServlet`，并且可以看到`<load-on-startup>1</load-on-startup>`表示在`Tomcat`服务器启动时就创建，`DefaultServlet`时用来请求静态资源和没有映射给`DispatcherServlet`的其它`Servlet`请求。
 
@@ -1190,3 +1190,272 @@ public String doSomeString() {
 
 只要添加上了`DefaultServlet`，测试后发现可以直接访问本地的`jQuery`资源，怪不得之前一直无法访问...
 
+## 4. `SSM`框架整合
+
+## 5. `SpringMVC`核心技术
+
+#### 5.1 请求转发和重定向
+
+当处理器处理完毕请求之后，若需要向其它资源进行跳转，有两种方式，一种是请求转发，另外一种就是重定向。请求转发是一次转发也就是说从头到尾都只向服务器发送一次请求，所以可以请求转发访问`/WEB-INF`安全目录下的资源，而重定向会发出二次请求，所以无法访问`/WEB-INF`安全目录下的资源。根据要跳转的目的地的资源类型，跳转又可以分为跳转到页面和跳转到其它处理器。
+
+`SpringMVC`将之前的`Servlet`的请求转发和重定向进行了封装，之前我们使用的是：`httpServletRequest.getRequestDispatcher("xxx.jsp").forward();`以及`httpServletResponse.sendRedirect("xxx.jsp");`现在我们可以不这样使用了。
+
+![](https://img-blog.csdnimg.cn/106c2ff09bc54a9cb3b10cd2d9ce9131.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAQ3JBY0tlUi0x,size_20,color_FFFFFF,t_70,g_se,x_16)
+
+点击测试请求转发，无论是从地址栏还是从下面的方框中都可以发现只发送了一次请求：
+
+![](https://img-blog.csdnimg.cn/bf168a4dead3449996ea87728c94a0bc.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAQ3JBY0tlUi0x,size_20,color_FFFFFF,t_70,g_se,x_16)
+
+点击测试重定向，可以发现地址栏变化并且从客户端发送了两次请求：
+
+![](https://img-blog.csdnimg.cn/e96d4ab71d8046ff9908057c19a4d22d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAQ3JBY0tlUi0x,size_20,color_FFFFFF,t_70,g_se,x_16)
+
+以上就是请求转发和重定向的区别，`SpringMVC`不是不可以使用这种方式进行请求转发和重定向，而是可以使用更好的方式进行请求转发和重定向，那到底`SpringMVC`是如何进行请求转发和重定向的呢？请看下回。
+
+```java
+package com.zwm.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@Controller(value = "myController10")
+@RequestMapping(value = "/user")
+public class MyController10 {
+    @RequestMapping(value = "/some13.do")
+    public void doSome1(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ServletException, IOException {
+        httpServletRequest.getRequestDispatcher("../WEB-INF/view/show.jsp").forward(httpServletRequest, httpServletResponse);
+    }
+
+    @RequestMapping(value = "/some14.do")
+    public void doSome2(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ServletException, IOException {
+        httpServletResponse.sendRedirect("/user/some13.do");
+    }
+}
+```
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+    <%--<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>--%>
+    <script src="js/jquery341.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $("#btn").click(function () {
+                $.ajax({
+                    url: "user/some12.do",
+                    data: {
+                        name: "smith",
+                        age: 18
+                    },
+                    type: "post",
+                    dataType: "text",
+                    success: function (data) {
+                        alert(data)
+                    }
+                })
+            })
+        })
+    </script>
+<body>
+<button id="btn">点击发起Ajax请求</button>
+<br>
+<br>
+<form action="/user/some13.do" method="post">
+    <button type="submit">测试请求转发</button>
+</form>
+<form action="/user/some14.do" method="post">
+    <button type="submit">测试重定向</button>
+</form>
+</body>
+</html>
+```
+
+##### 5.1.1 `SpringMVC`封装的请求转发
+
+`SpringMVC`处理请求转发非常简单，只需要在要`modelAndView.setViewName()`中加入`forward:/example.jsp`就可以完成指定请求转发的路径。此时忽略掉了`InternalResourceViewResolver`内部资源视图解析器的作用，指定完整的视图路径即可请求转发到那里。
+
+再次重申，请求转发是一次性请求，请求转发的路径名地址栏是不会发生变化的，并且只能访问当前服务器下的资源包括`/WEB-INF`安全目录的资源但是不能访问外部资源：
+
+```java
+package com.zwm.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+@Controller(value = "myController11")
+@RequestMapping(value = "/user")
+public class MyController11 {
+    @RequestMapping(value = "/some15.do", method = RequestMethod.POST)
+    public ModelAndView doSome1() {
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.addObject("msg", "SpringMVC请求转发");
+        modelAndView.setViewName("forward:/WEB-INF/view/hello.jsp");
+        return modelAndView;
+    }
+}
+```
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+    <%--<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>--%>
+    <script src="js/jquery341.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $("#btn").click(function () {
+                $.ajax({
+                    url: "user/some12.do",
+                    data: {
+                        name: "smith",
+                        age: 18
+                    },
+                    type: "post",
+                    dataType: "text",
+                    success: function (data) {
+                        alert(data)
+                    }
+                })
+            })
+        })
+    </script>
+<body>
+<button id="btn">点击发起Ajax请求</button>
+<br>
+<br>
+<form action="/user/some13.do" method="post">
+    <button type="submit">测试请求转发</button>
+</form>
+<form action="/user/some14.do" method="post">
+    <button type="submit">测试重定向</button>
+</form>
+<form action="/user/some15.do" method="post">
+    <button type="submit">SpringMVC请求转发</button>
+</form>
+<form action="/user/some16.do" method="post">
+    <button type="submit">SpringMVC重定向</button>
+</form>
+</body>
+</html>
+```
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+<h3>SpringMVC请求转发，一次请求，无法访问外部资源，可访问安全目录</h3><br/>
+<h3>msg:${msg}</h3><br/>
+</body>
+</html>
+```
+
+##### 5.1.2 `SpringMVC`封装的重定向
+
+只要`ModelAndView.setViewName()`中加入了：`redirect:/example.jsp`就可以指定重定向的路径，此时可以忽略掉`InternalResourceViewResolver`内部资源视图解析器的作用，指定完整的视图路径即可重定向到那里去。
+
+重定向是二次请求，请求重定向的`URL`路径名发生变化。可以访问服务器外部的资源，但是不可以访问`/WEB-INF`安全目录中的资源。
+
+```java
+package com.zwm.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+@Controller(value = "myController11")
+@RequestMapping(value = "/user")
+public class MyController11 {
+    @RequestMapping(value = "/some15.do", method = RequestMethod.POST)
+    public ModelAndView doSome1() {
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.addObject("msg", "SpringMVC请求转发");
+        modelAndView.setViewName("forward:/WEB-INF/view/hello.jsp");
+        return modelAndView;
+    }
+
+    @RequestMapping(value = "/some16.do", method = RequestMethod.POST)
+    public ModelAndView doSome2() {
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.addObject("msg", "SpringMVC请求转发");
+        modelAndView.setViewName("redirect:/WEB-INF/view/hello.jsp");
+        return modelAndView;
+    }
+}
+```
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+    <%--<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>--%>
+    <script src="js/jquery341.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $("#btn").click(function () {
+                $.ajax({
+                    url: "user/some12.do",
+                    data: {
+                        name: "smith",
+                        age: 18
+                    },
+                    type: "post",
+                    dataType: "text",
+                    success: function (data) {
+                        alert(data)
+                    }
+                })
+            })
+        })
+    </script>
+<body>
+<button id="btn">点击发起Ajax请求</button>
+<br>
+<br>
+<form action="/user/some13.do" method="post">
+    <button type="submit">测试请求转发</button>
+</form>
+<form action="/user/some14.do" method="post">
+    <button type="submit">测试重定向</button>
+</form>
+<form action="/user/some15.do" method="post">
+    <button type="submit">SpringMVC请求转发</button>
+</form>
+<form action="/user/some16.do" method="post">
+    <button type="submit">SpringMVC重定向</button>
+</form>
+</body>
+</html>
+```
+
+如果直接访问的安全目录下的`hello.jsp`可以看到是无法访问的：
+
+![](https://img-blog.csdnimg.cn/fa9d00ecfdca42f180a18c19031d4d61.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAQ3JBY0tlUi0x,size_20,color_FFFFFF,t_70,g_se,x_16)
+
+但是可以访问外部资源：
+
+![](https://img-blog.csdnimg.cn/ed7a3986a53246188ad8f32cd95350f8.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAQ3JBY0tlUi0x,size_20,color_FFFFFF,t_70,g_se,x_16)
+
+#### 5.2 异常处理
+
+
+
+#### 5.3 拦截器
+
+##### 5.3.1 单个和多个拦截器
+
+##### 5.3.2 权限拦截器举例

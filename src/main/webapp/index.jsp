@@ -24,5 +24,19 @@
     </script>
 <body>
 <button id="btn">点击发起Ajax请求</button>
+<br>
+<br>
+<form action="/user/some13.do" method="post">
+    <button type="submit">测试请求转发</button>
+</form>
+<form action="/user/some14.do" method="post">
+    <button type="submit">测试重定向</button>
+</form>
+<form action="/user/some15.do" method="post">
+    <button type="submit">SpringMVC请求转发</button>
+</form>
+<form action="/user/some16.do" method="post">
+    <button type="submit">SpringMVC重定向</button>
+</form>
 </body>
 </html>
