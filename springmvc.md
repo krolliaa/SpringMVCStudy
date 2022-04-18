@@ -1452,6 +1452,10 @@ public class MyController11 {
 
 #### 5.2 异常处理
 
+`SpringMVC`中常使用注解`@ExceptionHandler`来将一个方法指定为异常处理的方法。该注解只有一个可选属性：`value`，其值是一个`Class<?>`数组，用于指定该注解的方法所要处理的异常类即索要匹配的异常。
+
+流程如：被注解的类 ------> 统一异常处理 ------> `@ControllerAdvice`
+
 
 
 #### 5.3 拦截器
