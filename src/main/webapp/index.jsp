@@ -38,5 +38,10 @@
 <form action="/user/some16.do" method="post">
     <button type="submit">SpringMVC重定向</button>
 </form>
+<form action="/user/some18.do" method="post">
+    姓名：<input type="text" name="name">
+    年龄：<input type="text" name="agee">
+    <button type="submit">SpringMVC拦截器</button>
+</form>
 </body>
 </html>

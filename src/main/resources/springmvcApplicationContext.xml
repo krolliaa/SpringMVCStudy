@@ -11,4 +11,10 @@
         <property name="prefix" value="/WEB-INF/view"/>
         <property name="suffix" value=".jsp"/>
     </bean>
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/user/**"/>
+            <bean id="myHandlerInterceptor" class="com.zwm.handler.interceptor.MyHandlerInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
 </beans>

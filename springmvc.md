@@ -142,7 +142,7 @@
    </web-app>
    ```
 
-   在创建`DispatcherServlet`的同时就会创建`SpringMVC`容器，寻找`SpringMVC`的容器配置文件，一次性创建好配置文件的中的`bean`对象，`DispatcherServlet`类继承了`FrameworkServlet`类，该类中存在`set/getContextConfigLocaltion`用于设置和获取容器配置文件，默认寻找的路径是`WEB-INF/springmvc-servlet.xml`然后找到`springmvc`【自定义】可以指定` Servlet`要访问的`springmvc`配置文件在哪里 ---> 在  里头使用 :
+   在创建`DispatcherServlet`的同时就会创建`SpringMVC`容器，寻找`SpringMVC`的容器配置文件，一次性创建好配置文件的中的`bean`对象，`DispatcherServlet`类继承了`FrameworkServlet`类，该类中存在`set/getContextConfigLocaltion`用于设置和获取容器配置文件，默认寻找的路径是`WEB-INF/springmvc-servlet.xml`然后找到`springmvc`【自定义】可以指定` Servlet`要访问的`springmvc`配置文件在哪里 ---> 在 里头使用 :
 
    `web.xml`：
 
@@ -157,7 +157,7 @@
            <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
            <init-param>
                <param-name>contextConfigLocation</param-name>
-               <param-value>classpath:springMVCApplicationContext.xml</param-value>
+               <param-value>classpath:springMVCApplicationContext1.xml</param-value>
            </init-param>
            <load-on-startup>1</load-on-startup>
        </servlet>
@@ -370,7 +370,7 @@ public class MyController3 {
         <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
         <init-param>
             <param-name>contextConfigLocation</param-name>
-            <param-value>classpath:springMVCApplicationContext.xml</param-value>
+            <param-value>classpath:springMVCApplicationContext1.xml</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
@@ -1824,19 +1824,290 @@ defaultError.jsp <br/>
 `springmvcApplicationContext.xml`配置拦截器[指定拦截器以及要拦截的路径]：
 
 ```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+    <mvc:annotation-driven/>
+    <mvc:default-servlet-handler/>
+    <context:component-scan base-package="com.zwm.controller"/>
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/view"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/user/**"/>
+            <bean id="myHandlerInterceptor" class="com.zwm.handler.interceptor.MyHandlerInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+</beans>
 ```
 
 `MyController`控制器类：
 
 ```java
+package com.zwm.controller;
 
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+@Controller(value = "myController13")
+@RequestMapping(value = "/user")
+public class MyController13 {
+    @RequestMapping(value = "/some18.do", method = RequestMethod.POST)
+    public ModelAndView doSome(String name, Integer age) {
+        System.out.println("=====执行MyController中的doSome方法=====");
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.addObject("myName", name);
+        modelAndView.addObject("myAge", age);
+        modelAndView.setViewName("/show");
+        return modelAndView;
+    }
+}
 ```
 
 `MyInterceptor`拦截器实现`HandlerInterceptor`接口：
 
 ```java
+package com.zwm.handler.interceptor;
+
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+public class MyHandlerInterceptor implements HandlerInterceptor {
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        System.out.println("执行 MyInterceptor ------ preHandle()方法------");
+        return true;
+    }
+
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+        System.out.println("执行 MyInterceptor ------ postHandle()方法------ ");
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        System.out.println("执行 MyInterceptor ------ afterCompletion()方法--- -- - ");
+        HttpSession httpSession = request.getSession();
+        Object attribute = httpSession.getAttribute("HttpSession");
+        System.out.println("attribute 删除之前：" + attribute);
+        httpSession.removeAttribute("HttpSession");
+        System.out.println("attribute 删除之后：" + attribute);
+    }
+}
 ```
 
+多个拦截器会在`springmvcApplicationContext.xml`配置的顺序进行执行：
 
-
+```java
+执行 MyInterceptorOne ------ preHandle()方法------
+执行 MyInterceptorTwo ------ preHandle()方法------
+执行 MyInterceptorThree ------ preHandle()方法------
+执行 MyInterceptorThree ------ postHandle()方法------
+执行 MyInterceptorTwo ------ postHandle()方法------
+执行 MyInterceptorOne ------ postHandle()方法------
+执行 MyInterceptorThree ------ afterCompletion()方法------
+执行 MyInterceptorTwo ------ afterCompletion()方法------
+执行 MyInterceptorOne ------ afterCompletion()方法------
+```
 ##### 5.3.2 权限拦截器举例
+拦截登录，给予会话域参数，只有登录了才可以访问处理器否则无权访问
+
+1. 创建`ch12-interceptor-permission`项目
+
+2. 定义好`web.xml`和`springmvcApplicationContext.xml`
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <beans xmlns="http://www.springframework.org/schema/beans"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:context="http://www.springframework.org/schema/context"
+          xmlns:mvc="http://www.springframework.org/schema/mvc"
+          xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+       <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+           <property name="prefix" value="/WEB-INF/view/"/>
+           <property name="suffix" value=".jsp"/>
+       </bean>
+       <context:component-scan base-package="com.zwm.controller"/>
+       <mvc:interceptors>
+           <mvc:interceptor>
+               <mvc:mapping path="/user/**"/>
+               <bean class="com.zwm.handler.MyInterceptor"/>
+           </mvc:interceptor>
+       </mvc:interceptors>
+   </beans>
+   ```
+
+3. 创建控制器类`MyController.java`：
+
+   ```java
+   package com.zwm.controller;
+   
+   import org.springframework.stereotype.Controller;
+   import org.springframework.web.bind.annotation.RequestMapping;
+   import org.springframework.web.bind.annotation.RequestMethod;
+   import org.springframework.web.servlet.ModelAndView;
+   
+   @Controller(value = "myController")
+   @RequestMapping(value = "/user")
+   public class MyController {
+       @RequestMapping(value = "/some.do", method = RequestMethod.POST)
+       public ModelAndView doSome(String name, Integer age) {
+           System.out.println("=====执行MyController中的doSome方法=====");
+           ModelAndView modelAndView = new ModelAndView();
+           modelAndView.addObject("myName", name);
+           modelAndView.addObject("myAge", age);
+           modelAndView.setViewName("show");
+           return modelAndView;
+       }
+   }
+   ```
+
+4. 创建拦截器类：`MyInterceptor.java`
+
+   ```java
+   package com.zwm.handler;
+   
+   import org.springframework.web.servlet.HandlerInterceptor;
+   import org.springframework.web.servlet.ModelAndView;
+   
+   import javax.servlet.http.HttpServletRequest;
+   import javax.servlet.http.HttpServletResponse;
+   
+   public class MyInterceptor implements HandlerInterceptor {
+       @Override
+       public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+           System.out.println("执行 MyInterceptorOne ------ preHandle()方法------");
+           String loginName = "";
+           Object attribute = request.getSession().getAttribute("name");
+           if (attribute != null) {
+               loginName = attribute.toString();
+           }
+           if (!"smith".equals(loginName)) {
+               request.getRequestDispatcher("/tips.jsp").forward(request, response);
+               return false;
+           }
+           return true;
+       }
+   
+       @Override
+       public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+           System.out.println("执行 MyInterceptorOne ------ postHandle()方法------");
+       }
+   
+       @Override
+       public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+           System.out.println("执行 MyInterceptorOne ------ afterCompletion()方法------");
+       }
+   }
+   ```
+
+5. 创建初始化页面`index.jsp`
+
+   ```jsp
+   <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+   <%
+       String basePath = request.getScheme() + "://" +
+               request.getServerName() + ":" + request.getServerPort() +
+               request.getContextPath() + "/";
+   %>
+   <html>
+   <head>
+       <title>Title</title>
+       <base href="<%=basePath%>"/>
+   </head>
+   <body>
+   <p>这是一个拦截器</p>
+   <form action="user/some.do" method="post">
+       姓名：<input type="text" name="name"> <br/>
+       年龄：<input type="text" name="age"> <br/>
+       <input type="submit" value="提交请求">
+   </form>
+   </body>
+   </html>
+   ```
+
+6. 登录页面`login.jsp`：
+
+   ```jsp
+   <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+   <html>
+   <head>
+       <title>Title</title>
+   </head>
+   <body>
+   模拟登录,smith登录系统，退出登录请到logout.jsp
+   <%
+       session.setAttribute("name", "smith");
+   %>
+   </body>
+   </html>
+   ```
+
+7. 登出页面`logout.jsp`：
+
+   ```jsp
+   <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+   <html>
+   <head>
+       <title>Title</title>
+   </head>
+   <body>
+   退出系统，从session中删除数据
+   <%
+       session.removeAttribute("name");
+   %>
+   </body>
+   </html>
+   ```
+
+8. `tips`页面：
+
+   ```jsp
+   <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+   <html>
+   <head>
+       <title>Title</title>
+   </head>
+   <body>
+   tips.jsp 请先到login.jsp页面登录
+   </body>
+   </html>
+   ```
+
+9. `show.jsp`页面：
+
+   ```jsp
+   <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+   <html>
+   <head>
+       <title>Title</title>
+   </head>
+   <body>
+   <h3>/WEB-INF/view/show.jsp从request作用域获取数据</h3><br/>
+   <h3>myName数据：${myName}</h3><br/>
+   <h3>myAge数据：${myAge}</h3>
+   </body>
+   </html>
+   ```
+
+   结果：
+
+   ```text
+   执行 MyInterceptorOne ------ preHandle()方法------
+   执行 MyInterceptorOne ------ preHandle()方法------
+   =====执行MyController中的doSome方法=====
+   执行 MyInterceptorOne ------ postHandle()方法------
+   执行 MyInterceptorOne ------ afterCompletion()方法------
+   执行 MyInterceptorOne ------ preHandle()方法------
+   ```
