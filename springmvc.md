@@ -1452,14 +1452,391 @@ public class MyController11 {
 
 #### 5.2 异常处理
 
-`SpringMVC`中常使用注解`@ExceptionHandler`来将一个方法指定为异常处理的方法。该注解只有一个可选属性：`value`，其值是一个`Class<?>`数组，用于指定该注解的方法所要处理的异常类即索要匹配的异常。
+`pom.xml`：
 
-流程如：被注解的类 ------> 统一异常处理 ------> `@ControllerAdvice`
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
 
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
+    <groupId>com.zwm</groupId>
+    <artifactId>SpringMVCException</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>5.2.12.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aspects</artifactId>
+            <version>5.3.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
+            <version>5.2.12.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>5.2.12.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.27</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis-spring</artifactId>
+            <version>1.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>5.2.2.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+            <version>5.2.12.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+            <version>5.2.12.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>5.2.12.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.18</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.9.0</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.properties</include>
+                    <include>**/*.xml</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+    </build>
+</project>
+```
+
+构造异常类：`MyUserError NameError AgeError`：
+
+```java
+package com.zwm.exception;
+
+public class MyUserException extends Exception {
+    public MyUserException() {
+        super();
+    }
+
+    public MyUserException(String message) {
+        super(message);
+    }
+}
+```
+
+```java
+package com.zwm.exception;
+
+public class NameException extends MyUserException {
+    public NameException() {
+    }
+
+    public NameException(String message) {
+        super(message);
+    }
+}
+```
+
+```java
+package com.zwm.exception;
+
+public class AgeException extends MyUserException {
+    public AgeException() {
+    }
+
+    public AgeException(String message) {
+        super(message);
+    }
+}
+```
+
+构造统一异常处理类：`handler.MyExceptionHandler`
+
+```java
+package com.zwm.handler;
+
+import com.zwm.exception.AgeException;
+import com.zwm.exception.NameException;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.ModelAndView;
+
+@ControllerAdvice
+public class MyExceptionHandler {
+
+    @ExceptionHandler(value = NameException.class)
+    public ModelAndView nameError(Exception exception) {
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.addObject("msg", "姓名异常！");
+        modelAndView.addObject("ex", exception);
+        modelAndView.setViewName("nameError");
+        return modelAndView;
+    }
+
+    @ExceptionHandler(value = AgeException.class)
+    public ModelAndView ageError(Exception exception) {
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.addObject("msg", "年龄异常！");
+        modelAndView.addObject("ex", exception);
+        modelAndView.setViewName("ageError");
+        return modelAndView;
+    }
+
+    @ExceptionHandler
+    public ModelAndView otherError(Exception exception) {
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.addObject("msg", "其它异常！");
+        modelAndView.addObject("ex", exception);
+        modelAndView.setViewName("otherError");
+        return modelAndView;
+    }
+}
+```
+
+`MyController12`控制器类：
+
+```java
+package com.zwm.controller;
+
+import com.zwm.exception.NameException;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+@Controller(value = "myController12")
+@RequestMapping(value = "/user")
+public class MyController12 {
+    @RequestMapping(value = "/some17.do", method = RequestMethod.POST)
+    public ModelAndView doSome(String name, Integer age) throws NameException {
+        ModelAndView modelAndView = new ModelAndView();
+        if (name == null || !"smith".equals(name)) {
+            throw new NameException("姓名错误！");
+        }
+        if (age == null || 80 < age) {
+            throw new NameException("年龄错误！");
+        }
+        modelAndView.addObject("name", name);
+        modelAndView.addObject("age", age);
+        modelAndView.setViewName("show");
+        return modelAndView;
+    }
+}
+```
+
+`/view/index.jsp`：
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+    String basePath = request.getScheme() + "://" +
+            request.getServerName() + ":" + request.getServerPort() +
+            request.getContextPath() + "/";
+%>
+<html>
+<head>
+    <title>Title</title>
+    <base href="<%=basePath%>"/>
+</head>
+<body>
+<h3><p>全局异常处理</p></h3>
+<form action="/user/some17.do" method="post">
+    姓名：<input type="text" name="name"> <br/>
+    年龄：<input type="text" name="age"> <br/>
+    <input type="submit" value="提交请求">
+</form>
+</body>
+```
+
+`/view/show.jsp`：
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+  <title>Title</title>
+</head>
+<body>
+<h3>/WEB-INF/view/show.jsp从request作用域获取数据</h3><br/>
+<h3>myName数据：${myName}</h3><br/>
+<h3>myAge数据：${myAge}</h3>
+</body>
+</html>
+```
+
+`show.jsp`：
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+  <title>Title</title>
+</head>
+<body>
+nameError.jsp <br/>
+提示信息：${msg} <br/>
+系统异常消息：${ex.message}
+</body>
+</html>
+```
+
+`/view/nameError.jsp`：
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+  <title>Title</title>
+</head>
+<body>
+nameError.jsp <br/>
+提示信息：${msg} <br/>
+系统异常消息：${ex.message}
+</body>
+</html>
+```
+
+`/view/ageError.jsp`：
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+  <title>Title</title>
+</head>
+<body>
+nameError.jsp <br/>
+提示信息：${msg} <br/>
+系统异常消息：${ex.message}
+</body>
+</html>
+```
+
+`/view/otherError.jsp`：
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+defaultError.jsp <br/>
+提示信息：${msg} <br/>
+系统异常消息：${ex.message}
+</body>
+</html>
+```
+
+`springMVCApplicationContext.xml`：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+    <mvc:annotation-driven/>
+    <mvc:default-servlet-handler/>
+    <context:component-scan base-package="com.zwm.controller"/>
+    <context:component-scan base-package="com.zwm.handler"/>
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/view/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+</beans>
+```
 
 #### 5.3 拦截器
 
+拦截器`Interceptor`用于拦截指定的用户请求，并进行响应的预处理和后处理。拦截的时间点：处理器映射器映射出处理器类，映射出来的处理器类和拦截器组合形成处理器执行链，处理器执行链交给处理器适配器，在处理器适配器处理处理器之前就是拦截器作用的时间点。
+
+处理器映射器 ---> 处理器类 ---> 处理器类 + 拦截器 ===> 处理器执行链 ---> 处理器适配器
+
+自定义的拦截器需要实现`HandlerInterceptor`接口，需要重写`3`个方法：
+
+1. `preHandle`在控制器方法执行之前执行的拦截器方法，若为`true`则紧接着会执行处理器方法， 且会将`afterCompletion()`方法放到一个专门的执行栈中等待执行。
+2. `postHandle`：在控制器方法执行之后执行的拦截器方法，对第一次拦截的处理结果做二次验证， 若处理器方法没有执行，则该拦截器方法也不会执行，该拦截器方法包含`ModelAndView`，掌握着数据和视图的生杀大权，所以该方法可以修改处理器方法处理结果的数据，还可以修改资源跳转方 向。
+3. `afterCompletion`：在所有的请求处理完成之后执行的拦截器方法，相当于在视图`.forward`之后，也就是响应了页面之后才执行的，所有的事情差不多都尘埃落定了，这一步常用于做一些资源处理异常的，全局异常处理清除。有点类似于`try...catch...finally`中的`finally`
+
 ##### 5.3.1 单个和多个拦截器
+
+`springmvcApplicationContext.xml`配置拦截器[指定拦截器以及要拦截的路径]：
+
+```xml
+```
+
+`MyController`控制器类：
+
+```java
+
+```
+
+`MyInterceptor`拦截器实现`HandlerInterceptor`接口：
+
+```java
+```
+
+
 
 ##### 5.3.2 权限拦截器举例

@@ -7,11 +7,11 @@
 <html>
 <head>
     <title>Title</title>
-    <base href="<%=basePath%>" />
+    <base href="<%=basePath%>"/>
 </head>
 <body>
-<p>处理异常的，全局异常处理</p>
-<form action="some.do" method="post">
+<h3><p>全局异常处理</p></h3>
+<form action="/user/some17.do" method="post">
     姓名：<input type="text" name="name"> <br/>
     年龄：<input type="text" name="age"> <br/>
     <input type="submit" value="提交请求">
