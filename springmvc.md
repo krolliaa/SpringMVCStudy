@@ -1,3 +1,294 @@
+
+
+# `SpringMVC`
+
+## 1. `SpringMVC`初体验
+
+项目：` primary-annotation`
+
+完成功能：用户端提交一个请求服务端处理请求后给出一条欢迎信息然后响应到用户页面上
+
+1. 创建`maven`工程 ---> `maven archetype-webapp`
+
+2. 在`pom.xml`中引入`spring-webmvc`和`javax.servelt-api`
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   
+   <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+       <modelVersion>4.0.0</modelVersion>
+   
+       <groupId>com.zwm</groupId>
+       <artifactId>SpringMVCStudy</artifactId>
+       <version>1.0-SNAPSHOT</version>
+       <packaging>war</packaging>
+   
+       <properties>
+           <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+           <maven.compiler.source>1.8</maven.compiler.source>
+           <maven.compiler.target>1.8</maven.compiler.target>
+       </properties>
+   
+       <dependencies>
+           <dependency>
+               <groupId>javax.servlet</groupId>
+               <artifactId>servlet-api</artifactId>
+               <version>2.5</version>
+           </dependency>
+           <dependency>
+               <groupId>org.springframework</groupId>
+               <artifactId>spring-webmvc</artifactId>
+               <version>5.2.12.RELEASE</version>
+           </dependency>
+           <dependency>
+               <groupId>org.springframework</groupId>
+               <artifactId>spring-aspects</artifactId>
+               <version>5.3.17</version>
+           </dependency>
+           <dependency>
+               <groupId>org.springframework</groupId>
+               <artifactId>spring-aop</artifactId>
+               <version>5.2.12.RELEASE</version>
+           </dependency>
+           <dependency>
+               <groupId>org.springframework</groupId>
+               <artifactId>spring-web</artifactId>
+               <version>5.2.12.RELEASE</version>
+           </dependency>
+           <dependency>
+               <groupId>mysql</groupId>
+               <artifactId>mysql-connector-java</artifactId>
+               <version>8.0.27</version>
+           </dependency>
+           <dependency>
+               <groupId>org.mybatis</groupId>
+               <artifactId>mybatis-spring</artifactId>
+               <version>1.3.1</version>
+           </dependency>
+           <dependency>
+               <groupId>org.springframework</groupId>
+               <artifactId>spring-jdbc</artifactId>
+               <version>5.2.2.RELEASE</version>
+           </dependency>
+           <dependency>
+               <groupId>org.springframework</groupId>
+               <artifactId>spring-tx</artifactId>
+               <version>5.2.12.RELEASE</version>
+           </dependency>
+           <dependency>
+               <groupId>org.springframework</groupId>
+               <artifactId>spring-beans</artifactId>
+               <version>5.2.12.RELEASE</version>
+           </dependency>
+           <dependency>
+               <groupId>org.springframework</groupId>
+               <artifactId>spring-context</artifactId>
+               <version>5.2.12.RELEASE</version>
+           </dependency>
+           <dependency>
+               <groupId>junit</groupId>
+               <artifactId>junit</artifactId>
+               <version>4.11</version>
+               <scope>test</scope>
+           </dependency>
+       </dependencies>
+   
+       <build>
+           <resources>
+               <resource>
+                   <directory>src/main/java</directory>
+                   <includes>
+                       <include>**/*.properties</include>
+                       <include>**/*.xml</include>
+                   </includes>
+                   <filtering>false</filtering>
+               </resource>
+           </resources>
+       </build>
+   </project>
+   ```
+
+3. 配置中央调度器`DispatcherServlet`的信息，中央调度器也叫作前端控制器，是否使用了`SpringMVC`的标准就在于是否使用了这个`org.springframework.web.servelt.DispatcherServlet`这个类，它是`SpringMVC`的核心控制类，实例化后是一个`Servlet`对象，它的作用在于：接收用户发送的请求，调用其它控制器对象【这里的控制器对象就是使用了`@Controller`注解的类的实例化对象，它们只是一个普通对象而不是`Servlet`对象，在这里的`SpringMVC`容器中，`Servlet`有且只有一个那就是`DispatcherServlet`这个`Servlet`对象】然后将请求处理结果返回给用户，在`JavaWeb`中，`Tomcat`会自动帮我们创建好`Servlet`对象，所以我们只需要进行一些简单的配置即可：
+
+   ```xml
+   <servlet>
+       <servlet-name>springmvc</servlet-name>
+       <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+   </servlet>
+   <servlet-mapping>
+       <servlet-name>springmvc</servlet-name>
+       <url-pattern>*.do</url-pattern>
+   </servlet-mapping>
+   ```
+
+   我们需要在整个`Web`应用启动时就随之创建调用`Servlet`的`init()`方法，要想做成这一步需要在`web.xml`中配置：`<load-on-startup>（值大于等于0）`表示在`Web`应用一启动就创建`Servlet`对象而不是在真正要使用的时候才创建，其值必须为一个整数，通常不等于`0`，数值越小表示创建的时间越早。但是如果没有`<load-on-startup>`或者该参数的值小于`0`时则表示`Servlet`对象将只有在真正要使用的时候才会被创。所以要想一开始就有该类对象就必须使用`<load-on-startup>`，如果有两个`Servlet`类对象则值小的那个先创建，如果两个值相等那么容器会自己选择先创建哪个后创建哪个。
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+            version="4.0">
+       <servlet>
+           <servlet-name>springmvc</servlet-name>
+           <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+           <load-on-startup>1</load-on-startup>
+       </servlet>
+       <servlet-mapping>
+           <servlet-name>springmvc</servlet-name>
+           <url-pattern>*.do</url-pattern>
+       </servlet-mapping>
+   </web-app>
+   ```
+
+   在创建`DispatcherServlet`的同时就会创建`SpringMVC`容器，寻找`SpringMVC`的容器配置文件，一次性创建好配置文件的中的`bean`对象，`DispatcherServlet`类继承了`FrameworkServlet`类，该类中存在`set/getContextConfigLocaltion`用于设置和获取容器配置文件，默认寻找的路径是`WEB-INF/springmvc-servlet.xml`然后找到`springmvc`【自定义】可以指定` Servlet`要访问的`springmvc`配置文件在哪里 ---> 在  里头使用 :
+
+   `web.xml`：
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+            version="4.0">
+       <servlet>
+           <servlet-name>springmvc</servlet-name>
+           <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+           <init-param>
+               <param-name>contextConfigLocation</param-name>
+               <param-value>classpath:springMVCApplicationContext.xml</param-value>
+           </init-param>
+           <load-on-startup>1</load-on-startup>
+       </servlet>
+       <servlet-mapping>
+           <servlet-name>springmvc</servlet-name>
+           <url-pattern>*.do</url-pattern>
+       </servlet-mapping>
+   </web-app>
+   ```
+
+   `springMVCApplicationContext.xml`：
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <beans xmlns="http://www.springframework.org/schema/beans"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:context="http://www.springframework.org/schema/context"
+          xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+       <context:component-scan base-package="com.zwm"/>
+       <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+           <property name="prefix" value="/WEB-INF/view"/>
+           <property name="suffix" value=".jsp"/>
+       </bean>
+   </beans>
+   ```
+
+4. 创建初始化用户请求页面：`index.jsp`：
+
+   ```jsp
+   <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+   <html>
+   <head>
+       <title>Title</title>
+   </head>
+   <body>
+   <h3><a href="http://localhost:8080/some.do">点击访问some.do！！！</a></h3><br/>
+   </body>
+   </html>
+   ```
+
+5. 创建控制器对象也叫作处理器对象，它不是`Servlet`对象，而是一个普通对象，它会被中央调度器调用，在控制器类方法上加上`@RequestMapping`表示当前的方法是处理器方法，该方法要对`value`属性所指定的`URI`进行处理与响应。通俗地讲就是把指定的请求交给方法去处理。被注解的方法名可以自定义，若有多个请求均可以匹配该方法，则`@RequestMapping`的`value`值可以写成一个数组
+
+   补充：`ModelAndView`类中的`addObject()`方法用于向`Model`中添加数据，`Model`的底层是一个`HashMap`，`Model`中的数据存储在`Request`作用域中，`SpringMVC`默认采用转发的方式跳转到视图，然后`Model`存在在`Request`作用域中的数据将被销毁。
+
+   ```java
+   package com.zwm.controller;
+   
+   import org.springframework.stereotype.Controller;
+   import org.springframework.web.bind.annotation.RequestMapping;
+   import org.springframework.web.servlet.ModelAndView;
+   
+   @Controller(value = "myController")
+   public class MyController {
+       @RequestMapping(value = "/some.do")
+       public ModelAndView doSome() {
+           System.out.println("这里是控制器对象，是由中央调度器DispatcherServlet调用的，用于处理some.do请求");
+           ModelAndView modelAndView = new ModelAndView();
+           modelAndView.addObject("msg", "使用注解开发的SpringMVC应用");
+           modelAndView.addObject("fun", "doSome");
+           modelAndView.setViewName("/show");//跳转
+           return modelAndView;
+       }
+   }
+   ```
+
+6. 创建一个结果页面`show.jsp`显示响应的请求结果：
+
+   ```jsp
+   <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+   <html>
+   <head>
+       <title>Title</title>
+   </head>
+   <body>
+   <h3>/WEB-INF/view/show.jsp从request作用域获取数据</h3><br/>
+   <h3>msg数据：${msg}</h3><br/>
+   <h3>fun数据：${fun}</h3>
+   </body>
+   </html>
+   ```
+
+7. 创建`Tomcat`服务器配置好地址才可以访问：`Application_context`然后就可以直接访问了
+
+## 2. `SpringMVC`回顾整个流程
+
+用户访问`http://localhost:8080/some.do`，提交`GET`请求给`Tomcat`服务器，`Tomcat`服务器调用中央调度器`DispatcherServlet`对该请求进行拦截，中央调度器调用控制器对象`MyController`中的`doSome`，然后经过处理之后将其送给`DispatcherServlet`然后中央调度器将请求处理结果返回给用户显示在`show.jsp`页面上，可以看到中央调度器`DispatcherServlet`起到了承上启下的作用，具体流程如下：
+
+1. 浏览器发送请求给`Tomcat`服务器就是就是到了`DispatcherServlet`中央调度器手中
+2. 中央调度器`DispatcherServlet`将请求发送给处理器映射器：`HandleMapping`上
+3. `HandleMapping`处理器映射器会根据请求找到处理该请求的处理器类，并将要处理的清楚封装成处理器执行链返回给中央调度器`DispatcherServlet`
+4. 中央调度器根据处理器执行链中的处理器找到可以执行的处理器适配器`HandleAdaptor`
+5. 处理器适配器`HandleAdaptor`调用执行处理器`Controller`
+6. 处理器`Controller`将处理结果以及要跳转的视图封装到一个对象`ModelAndView`中并将其返回给处理器适配器`HandleAdaptor`
+7. 处理器适配器直接将`ModelAndView`对象处理结果和要跳转的视图返回给中央调度器
+8. 中央调度器将`ModelAndView`交给`InternalResourceViewResolver`内部资源视图解析器，解析视图封装为`view`视图对象
+9. 内部资源视图解析器`InternalResourceViewResolver`将封装好的视图对象返回给中央调度器
+10. 中央调度器执行视图对象，让其自己进行渲染，即进行数据填充形成相应对象
+11. 中央调度器响应将请求处理结果返回给浏览器
+
+![](https://img-blog.csdnimg.cn/63e4db88e2bf40c79f7b55e052f7f40d.png?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAQ3JBY0tlUi0x,size_20,color_FFFFFF,t_70,g_se,x_16)
+
+## 3. `SpringMVC`注解式开发
+
+### 3.1 `@RequestMapping`
+
+通过定义`RequestMapping`可以定义处理器对于请求的映射规则，该注解可以定义在方法上也可以定义在类上，定义位置不同所代表的的意义也是不同的。定义在类上表示的是映射的公共路径，比如有两个映射路径，定义在`A`方法上的`@RequestMapping(value = "/some")`，定义在`B`方法上的`@RequestMapping(value = "/other")`，此时在类加上`@RequestMapping(value = "/test")`则表示访问`A`需要的`URL`地址应为：`http://localhost:8080/test/some`这样才可以访问到，也就是说在类上方加入这个注解代表的是公共访问路径。
+
+除了`value`属性，`@RequestMapping`注解还有`method`属性，它可以指定用户请求的方式是`GET`、`POST`或者其它【这个需要根据`Restful`规则和具体需求决定】
+
+```java
+package com.zwm.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+@Controller(value = "myController1")
+@RequestMapping(value = "/user", method = RequestMethod.GET)
+public class MyController1 {
+    @RequestMapping(value = "/some1.do")
+    public ModelAndView doSome() {
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.addObject("msg", "使用注解开发的SpringMVC应用之 @RequestMapping");
+        modelAndView.addObject("fun", "执行doSome方法");
+        modelAndView.setViewName("/show");
+        return modelAndView;
+    }
+}
+```
+
 ### 4.2 接收请求参数
 
 处理器方法可以包含以下参数：`HttpServletRequest`以及`HttpServletResponse`还有`HttpSession`直接获取想要的参数即可：
@@ -898,3 +1189,4 @@ public String doSomeString() {
 除此之外顺带提一下，就如`4.3`中返回数据类型看到的一样，如果需要返回的是`json`格式的数据，需要添加：`<mvc:annotation-driven/>`
 
 只要添加上了`DefaultServlet`，测试后发现可以直接访问本地的`jQuery`资源，怪不得之前一直无法访问...
+
