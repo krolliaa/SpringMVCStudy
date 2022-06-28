@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+    <!--配置组件扫描器-->
+    <context:component-scan base-package="com.kk.controller"/>
+    <!--配置Thymeleaf视图解析器-->
+    <bean id="thymeleafViewResolver" class="org.thymeleaf.spring5.view.ThymeleafViewResolver">
+        <!--配置该视图解析器优先级-->
+        <property name="order" value="1"/>
+        <!--配置视图解析器所使用的编码格式-->
+        <property name="characterEncoding" value="UTF-8"/>
+        <!--配置模板引擎-->
+        <property name="templateEngine">
+            <bean class="org.thymeleaf.spring5.SpringTemplateEngine">
+                <property name="templateResolver">
+                    <bean class="org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver">
+                        <!--配置视图解析器前缀名-->
+                        <property name="prefix" value="/WEB-INF/templates/"/>
+                        <!--配置视图解析器后缀名-->
+                        <property name="suffix" value=".html"/>
+                        <!--配置模板模型 HTML5-->
+                        <property name="templateMode" value="HTML5"/>
+                        <!--配置所使用的编码格式-->
+                        <property name="characterEncoding" value="UTF-8"/>
+                    </bean>
+                </property>
+            </bean>
+        </property>
+    </bean>
+</beans>
