@@ -18,7 +18,7 @@
                 <property name="templateResolver">
                     <bean class="org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver">
                         <!--视图前缀【必须配置】-->
-                        <property name="prefix" value="/WEB-INF/templates"/>
+                        <property name="prefix" value="/WEB-INF/templates/"/>
                         <!--视图后缀【必须配置】-->
                         <property name="suffix" value=".html"/>
                         <!--配置模板模型 HTML5-->
