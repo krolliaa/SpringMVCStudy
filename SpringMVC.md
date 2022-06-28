@@ -226,4 +226,37 @@
    
      接着部署下`Tomcat`服务器，然后就可以进行测试了，发现是可以成功访问到首页的
      
-   - 
+   - `HelloWorld`：访问指定页面 ---> 首页中添加超链接：使用`thymeleaf`获取当前`web`路径`<a th:href="@{/target}"></a>`
+   
+     - 修改`index.html`
+   
+       ```html
+       <!DOCTYPE html>
+       <html lang="en" xmlns:th="http://www.thymeleaf.org">
+       <head>
+           <meta charset="UTF-8">
+           <title>Title</title>
+       </head>
+       <body>
+           <h1>首页</h1>
+           <a th:href="@{/target}">访问 target 页面，获取 HelloWorld</a>
+       </body>
+       </html>
+       ```
+   
+     - 创建`target.html`
+   
+       ```html
+       <!DOCTYPE html>
+       <html lang="en" xmlns:th="http://www.thymeleaf.org">
+       <head>
+           <meta charset="UTF-8">
+           <title>Target</title>
+       </head>
+       <body>
+       HelloWorld
+       </body>
+       </html>
+       ```
+   
+       
