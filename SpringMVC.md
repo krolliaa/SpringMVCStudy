@@ -259,3 +259,244 @@
     </html>
     ```
 
+## `@RequestMapping`注解
+
+### `@RequestMapping`注解的功能
+
+其作用就是将请求和处理请求的控制器方法关联起来，建立映射关系。`SpringMVC`中的`DispatcherServlet`前端控制器接收到用户的请求，就会在映射关系中找对应的控制器方法来处理这个请求。
+
+### `@RequestMapping`注解的位置
+
+- 放在类上，表示设置映射请求的请求路径统一的初始信息【就是打头路径】
+
+- 放在方法上，表示设置映射请求的请求路径的具体信息【就是最末尾路径】
+
+- 下面是一个例子：访问`/test/testRequestMapping`时才访问得到`success.html`页面
+
+  ```java
+  package com.kk.controller;
+  
+  import org.springframework.stereotype.Controller;
+  import org.springframework.web.bind.annotation.RequestMapping;
+  
+  @Controller
+  @RequestMapping(value = "/test")
+  public class RequestMappingController {
+      @RequestMapping(value = "/testRequestMapping")
+      public String testRequestMapping() {
+          return "success";
+      }
+  }
+  ```
+
+  ### `@RequestMapping`注解的`value`属性
+
+  `value`属性匹配的是请求路径。
+
+  通过源码可以看到可以给`value`属性设置多个值 ---> `String`类型的数组。
+
+  ```java
+  //
+  // Source code recreated from a .class file by IntelliJ IDEA
+  // (powered by FernFlower decompiler)
+  //
+  
+  package org.springframework.web.bind.annotation;
+  
+  import java.lang.annotation.Documented;
+  import java.lang.annotation.ElementType;
+  import java.lang.annotation.Retention;
+  import java.lang.annotation.RetentionPolicy;
+  import java.lang.annotation.Target;
+  import org.springframework.core.annotation.AliasFor;
+  
+  @Target({ElementType.TYPE, ElementType.METHOD})
+  @Retention(RetentionPolicy.RUNTIME)
+  @Documented
+  @Mapping
+  public @interface RequestMapping {
+      String name() default "";
+  
+      @AliasFor("path")
+      String[] value() default {};
+  
+      @AliasFor("value")
+      String[] path() default {};
+  
+      RequestMethod[] method() default {};
+  
+      String[] params() default {};
+  
+      String[] headers() default {};
+  
+      String[] consumes() default {};
+  
+      String[] produces() default {};
+  }
+  ```
+
+  ```java
+  package com.kk.controller;
+  
+  import org.springframework.stereotype.Controller;
+  import org.springframework.web.bind.annotation.RequestMapping;
+  
+  @Controller
+  @RequestMapping(value = {"/test1", "/test2"})
+  public class RequestMappingController {
+      @RequestMapping(value = "/testRequestMapping")
+      public String testRequestMapping() {
+          return "success";
+      }
+  }
+  ```
+
+### `@RequestMapping`注解的`method`属性
+
+`method`属性匹配的是请求方式。是一个`RequestMethod`类型的数组，表示请求映射可以匹配多种请求方式。若当前请求的请求地址满足请求映射的`value`属性【不满足将直接报`404`错误】，但是请求方式不满足`method`则浏览器报`405`错误，表示请求方式错误。通过`Postman`可以验证上述说法。
+
+```html
+<!doctype html>
+<html lang="zh">
+
+<head>
+	<title>HTTP状态 405 - 方法不允许</title>
+	<style type="text/css">
+		body {
+			font-family: Tahoma, Arial, sans-serif;
+		}
+
+		h1,
+		h2,
+		h3,
+		b {
+			color: white;
+			background-color: #525D76;
+		}
+
+		h1 {
+			font-size: 22px;
+		}
+
+		h2 {
+			font-size: 16px;
+		}
+
+		h3 {
+			font-size: 14px;
+		}
+
+		p {
+			font-size: 12px;
+		}
+
+		a {
+			color: black;
+		}
+
+		.line {
+			height: 1px;
+			background-color: #525D76;
+			border: none;
+		}
+	</style>
+</head>
+
+<body>
+	<h1>HTTP状态 405 - 方法不允许</h1>
+	<hr class="line" />
+	<p><b>类型</b> 状态报告</p>
+	<p><b>消息</b> Request method &#39;POST&#39; not supported</p>
+	<p><b>描述</b> 请求行中接收的方法由源服务器知道，但目标资源不支持</p>
+	<hr class="line" />
+	<h3>Apache Tomcat/8.5.78</h3>
+</body>
+
+</html>
+```
+
+### `@RequestMapping`结合请求方式的派生注解
+
+> - 处理`GET`请求的映射 ---> `@GetMapping` ---> 相当于`@RequestMapping(method = RequestMethod.GET)`
+> - 处理`POST`请求的映射 ---> `@PostMapping` ---> 相当于`@RequestMapping(method = RequestMethod.POST)`
+> - 处理`PUT`请求的映射 ---> `@PutMapping` ---> 相当于`@RequestMapping(method = RequestMethod.PUT)`
+> - 处理`DELETE`请求的映射 ---> `@DeleteMapping` ---> 相当于`@RequestMapping(method = RequestMethod.DELETE)`
+
+```java
+@GetMapping(value = "/testRequestMapping2")
+public String testPostMapping() {
+    return "success";
+}
+```
+
+目前浏览器只支持`GET POST`请求方式发送请求给服务器，就算你在前端页面比如一个表单设置的`methdo`为其它请求方式的字符串`PUT DELETE`等，还是默认会转化为`GET`的请求方式。
+
+倘若执意需要发送`PUT DELETE`请求，则需要通过`spring`提供的过滤器`HandlerHttpMethodFilter`，该方式在`Restful`中会学习。
+
+### `@RequestMapping`注解的`params`属性
+
+该属性表示的是请求参数`parameter`，是一个字符串类型的数组，可以通过四种表达式设置请求参数和请求映射的匹配关系：
+
+- `param`：要求请求映射所匹配的请求会必须携带`param`请求参数
+- `!param`：要求请求映射所匹配的请求必须不能携带`param`请求参数
+- `param=value`：要求请求映射所匹配的请求必须携带`param`请求参数且`param=value`
+- `param!=value`：要求请求映射所匹配的请求必须携带`param`请求参数但是`param!=value`
+
+下面是一个可以说明`param`属性的例子：【我觉得可以拿来做数据库账号的比对使用，但是感觉不太安全】
+
+```java
+@RequestMapping(value = "/testRequestMapping3", method = RequestMethod.GET, params = {"username=admin", "password!=123456"})
+public String testRequestMappingParam() {
+    return "success";
+}
+```
+
+此时若访问链接：`http://localhost:8080/test1/testRequestMapping3?username=zhangsan&password=654321`不可以访问，因为`username != admin`，只有当`username`为`admin`并且`password`不为`123456`的时候才可以访问，否则将返回`400`错误【客户端错误】。
+
+如果使用`Thymeleaf`添加参数则应该使用：`<a th:href="@{/test1/testRequestMapping3(username='admin', password='654321')}">测试 @RequestMapping 中的 params 参数</a>`
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>首页demo02</h1>
+    <a th:href="@{/test1/testRequestMapping3(username='admin', password='654321')}">测试 @RequestMapping 中的 params 参数</a>
+</body>
+</html>
+```
+
+### `@RequestMapping`注解的`headers`属性
+
+- `@RequestMapping`注解的`headers`属性通过请求的请求头信息匹配请求映射
+- `RequestMapping`注解的`headers`属性是一个字符串类型的数组，可以通过四种表达式设置请求头信息和请求映射的匹配关系
+  - `header`：要求请求映射所匹配的请求必须携带`header`请求头信息
+  - `!header`：要求请求映射所匹配的请求必须不能携带`header`请求头信息
+  - `header=value`：要求请求映射所匹配的请求必须携带`header`请求头信息且请求头信息必须等于`value`
+  - `header!=value`：要求请求映射所匹配的请求必须携带`header`请求头信息且请求头信息必须不等于`value`
+- 若请求路径成功但是不满足`headers`属性则报`404资源未找到`错误，`params`属性则为`400`，而`method`属性则为`405`，`value`属性则为`404`
+
+```java
+@RequestMapping(value = "/testRequestMapping4", method = RequestMethod.GET, params = {"username=admin", "password!=123456"}, headers = {"Host=localhost:8081"})
+public String testRequestMappingHeaders() {
+    return "success";
+}
+```
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>首页demo02</h1>
+    <a th:href="@{/test1/testRequestMapping4(username='admin', password='654321')}">测试 @RequestMapping 中的 headers 参数</a>
+</body>
+</html>
+```
+
