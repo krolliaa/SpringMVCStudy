@@ -8,5 +8,28 @@
     <h1>首页demo02</h1>
     <a th:href="@{/test1/testRequestMapping3(username='admin', password='654321')}">测试 @RequestMapping 中的 params 参数</a>
     <a th:href="@{/test1/testRequestMapping4(username='admin', password='654321')}">测试 @RequestMapping 中的 headers 参数</a>
+    <br/><h1>获取 SpringMVC 请求参数</h1><br/>
+    <a th:href="@{/servletAPI(username = 'admin', password = '123456')}">ServletAPI 获取请求参数：HttpServletRequest</a>
+    <br/>
+    <a th:href="@{/parameter(username = 'admin', password = '123456')}">获取请求参数：控制器方法形式参数</a>
+    <form th:action="@{/testParameter}" method="post">
+        username: <input type="text" name="username"/><br/>
+        password: <input type="text" name="password"/><br/>
+        hobby:
+        <input name="hobby" type="checkbox" value="a"/>a
+        <input name="hobby" type="checkbox" value="b"/>b
+        <input name="hobby" type="checkbox" value="c"/>c
+        <input type="submit" value="SpringMVC获取参数">
+    </form>
+    <br/>---------------------------------------------------------------
+    <form th:action="@{/testPojo}" method="post">
+        用户名：<input type="text" name="username"><br>
+        密码：<input type="password" name="password"><br>
+        性别：<input type="radio" name="sex" value="男">男
+            <input type="radio" name="sex" value="女">女<br>
+        年龄：<input type="text" name="age"><br>
+        邮箱：<input type="text" name="email"><br>
+        <input type="submit">
+    </form>
 </body>
 </html>

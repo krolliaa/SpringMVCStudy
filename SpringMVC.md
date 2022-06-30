@@ -500,3 +500,280 @@ public String testRequestMappingHeaders() {
 </html>
 ```
 
+# 2022年06月29日
+
+## `SpringMVC`支持`ant`风格的路径
+
+**`ant`风格可以简单理解为模糊匹配。**
+
+- `?`：表示任意的单个字符
+
+  ```java
+  //http://localhost:8080/test1/ad/testAnt1
+  @GetMapping(value = "/a?a/testAnt1")
+  public String testAnt1() {
+      return "success";
+  }
+  ```
+
+- `*`：表示任意的`0`个或者多个字符，即有或没有都可以
+
+  ```java
+  //http://localhost:8080/test1/aaabbbccc/testAnt2
+  @GetMapping(value = "/a*/testAnt2")
+  public String testAnt2() {
+      return "success";
+  }
+  ```
+
+- `**`：表示任意的一层或多层目录，没有也可以即：`http://localhost:8080/test1/testAnt3`
+
+  ```java
+  //http://localhost:8080/test1/a/b/c/d/testAnt3
+  @GetMapping(value = "/**/testAnt3")
+  public String testAnt3() {
+      return "success";
+  }
+  ```
+
+注意：在使用`**`的时候，只能使用`/**/xxx`的方式，如果你是这样写的：`test1/a**a/testAnt3`则这个`a**a`真的是单独当作一个`*`来写的，你要是想要达到多层目录的效果，那你只能使用：`/**/xxx`这样当你访问：`/a/b/c/d/xxx`的时候依然可以访问到。
+
+## `SpringMVC`支持路径中的占位符`Restful`
+
+- 原始方式：`/deleteUser?id=1`
+- `Restful`方式：`/deleteUser/1`
+
+`SpringMVC`路径中的占位符常用于`Restful`风格中，当请求路径中将某些数据通过路径的方式传输到服务器中，就可以在相应的`@RequestMapping`注解中的`value`属性通过占位符表示传输的数据，在通过`@PathVariable`注解，将占位符所表示的数据赋值给控制器方法的形参。
+
+```java
+//http://localhost:8080/test1/testRestful/1/admin
+@RequestMapping(value = "/testRestful/{id}/{username}")
+public String testRestful(@PathVariable(value = "id") String id, @PathVariable(value = "username") String username) {
+    System.out.println("id: " + id + " ---> username: " + username);
+    return "success";
+}
+```
+
+## `SpringMVC`获取请求参数
+
+- **<font color="red">使用`ServletAPI`获取请求参数</font>**
+
+  `HttpServletRequest ---> httpServletRequest.getParameter("")`
+
+  ```java
+  package com.kk.controller;
+  
+  import org.springframework.stereotype.Controller;
+  import org.springframework.web.bind.annotation.RequestMapping;
+  
+  import javax.servlet.http.HttpServletRequest;
+  
+  @Controller
+  public class ParameterController {
+      @RequestMapping(value = "/servletAPI")
+      public String test(HttpServletRequest httpServletRequest) {
+          String username = httpServletRequest.getParameter("username");
+          String password = httpServletRequest.getParameter("password");
+          System.out.println(username + ":" + password);
+          return "success";
+      }
+  }
+  ```
+
+  ```html
+  <a th:href="@{/servletAPI(username = 'admin', password = '123456')}">ServletAPI 获取请求参数：HttpServletRequest</a>
+  ```
+
+- **<font color="red">通过控制器方法的形参获取请求参数</font>**
+
+  前提条件：形参跟传递进来的参数的名称一致
+
+  在控制器方法的形参位置，设置和请求参数同名的形参，当浏览器发送请求，匹配到请求映射时，在`DispatcherServlet`中就会将请求参数赋值给相应的形参。
+
+  ```java
+  @RequestMapping(value = "/parameter")
+  public String testParam(String username, String password) {
+      System.out.println(username + ":" + password);
+      return "success";
+  }
+  ```
+
+  ```html
+  <a th:href="@{/parameter(username = 'admin', password = '123456')}">获取请求参数：控制器方法形式参数</a>
+  ```
+
+  如果是复选框的话，则可以使用一个单独的字符串【逗号分隔】，也可以使用一个字符串数组
+
+  ```java
+  @RequestMapping(value = "/testParameter")
+  public String testParameter(String username, String password, String hobby) {
+      System.out.println(username + ":" + password + ":" + hobby);
+      return "success";
+  }
+  ```
+
+  ```java
+  @RequestMapping(value = "/testParameter")
+  public String testParameter(String username, String password, String[] hobby) {
+      System.out.println(username + ":" + password + ":" + Arrays.toString(hobby));
+      return "success";
+  }
+  ```
+
+  ```html
+  <form th:action="@{/testParameter}" method="post">
+      username: <input type="text" name="username"/><br/>
+      password: <input type="text" name="password"/><br/>
+      hobby:
+      <input name="hobby" type="checkbox" value="a"/>a
+      <input name="hobby" type="checkbox" value="b"/>b
+      <input name="hobby" type="checkbox" value="c"/>c
+      <input type="submit" value="SpringMVC获取参数">
+  </form>
+
+- **<font color="red">通过`@RequestParam()`获取请求参数【解决名称不一致问题】</font>**
+
+  `@RequestParam()`默认的`required`属性是`true`，表示必须传输名称为`value`的参数，否则报错报`400`错误。`defaultValue`表示默认值。该注解可以解决传递进来的名称跟后台名称不一致的问题。
+
+  `@RequestParam(value = "", required = true/false, defaultValue = "")`
+
+- **<font color="red">`@RequestHeader`</font>**
+
+  - `@RequestHeader`是将请求头信息和控制器方法的形参创建映射关系
+
+  - `@RequestHeader`注解一共有三个属性：`value required defaulValue`，用法同`@RequestParam`
+
+- **<font color="red">`@CookieValue`</font>**
+
+  - `@CookieValue`是将`cookie`数据和控制器方法的形参创建映射关系
+
+  - `@CookieValue`注解一共有三个属性：`value required defaulValue`，用法同`@RequestParam`
+
+- **<font color="red">通过`POJO`获取请求参数</font>**
+
+  - 可以在控制器方法的形参位置设置一个实体类类型的形参，此时若浏览器传输的请求参数的参数名和实体类中的属性名一致时，则请求参数就会为此属性赋值
+
+    ```html
+    <form th:action="@{/testPojo}" method="post">
+        用户名：<input type="text" name="username"><br>
+        密码：<input type="password" name="password"><br>
+        性别：<input type="radio" name="sex" value="男">男
+            <input type="radio" name="sex" value="女">女<br>
+        年龄：<input type="text" name="age"><br>
+        邮箱：<input type="text" name="email"><br>
+        <input type="submit">
+    </form>
+    ```
+
+    ```java
+    @RequestMapping(value = "/testPojo")
+    public String testPojo(User user) {
+        System.out.println(user.toString());
+        return "success";
+    }
+    ```
+
+    ```java
+    package com.kk.pojo;
+    
+    public class User {
+        private String username;
+        private String password;
+        private String sex;
+        private Integer age;
+        private String email;
+    
+        public User() {
+        }
+    
+        public User(String username, String password, String sex, Integer age, String email) {
+            this.username = username;
+            this.password = password;
+            this.sex = sex;
+            this.age = age;
+            this.email = email;
+        }
+    
+        public String getUsername() {
+            return username;
+        }
+    
+        public void setUsername(String username) {
+            this.username = username;
+        }
+    
+        public String getPassword() {
+            return password;
+        }
+    
+        public void setPassword(String password) {
+            this.password = password;
+        }
+    
+        public String getSex() {
+            return sex;
+        }
+    
+        public void setSex(String sex) {
+            this.sex = sex;
+        }
+    
+        public Integer getAge() {
+            return age;
+        }
+    
+        public void setAge(Integer age) {
+            this.age = age;
+        }
+    
+        public String getEmail() {
+            return email;
+        }
+    
+        public void setEmail(String email) {
+            this.email = email;
+        }
+    
+        @Override
+        public String toString() {
+            return "User{" +
+                    "username='" + username + '\'' +
+                    ", password='" + password + '\'' +
+                    ", sex='" + sex + '\'' +
+                    ", age=" + age +
+                    ", email='" + email + '\'' +
+                    '}';
+        }
+    }
+    ```
+
+- **<font color="red">解决获取请求参数的乱码问题</font>**
+
+  `User{username='??????', password='123465', sex='??·', age=1000, email='lkoipa01@gmail.com'}`
+
+  解决获取请求参数的乱码问题，可以使用`SpringMVC`提供的编码过滤器`CharacterEncodingFilter`，但是必须在`web.xml`中扫描。并且一定要将处理编码的过滤器配置在其它过滤器之前，否则无效。
+
+  ```xml
+  <filter>
+      <filter-name>CharacterEncodingFilter</filter-name>
+      <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+      <init-param>
+          <param-name>encoding</param-name>
+          <param-value>UTF-8</param-value>
+      </init-param>
+      <init-param>
+          <param-name>forceRequestEncoding</param-name>
+          <param-value>true</param-value>
+      </init-param>
+      <init-param>
+          <param-name>forceResponseEncoding</param-name>
+          <param-value>true</param-value>
+      </init-param>
+  </filter>
+  <filter-mapping>
+      <filter-name>CharacterEncodingFilter</filter-name>
+      <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  ```
+
+# 2022年06月30日
