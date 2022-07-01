@@ -777,3 +777,239 @@ public String testRestful(@PathVariable(value = "id") String id, @PathVariable(v
   ```
 
 # 2022年06月30日
+
+## 域对象共享数据
+
+域对象就是在一定范围内可以共享共享数据，通常有`3`种。
+
+> - `request`：一次请求，多个资源共享数据
+> - `session`：默认一次会话，多个请求，多个资源共享数据
+> - `servletContext`：一个应用，多个会话，多个请求，多个资源共享同一份数据
+
+### 使用`ServletAPI`向`request`域对象共享数据
+
+```java
+@RequestMapping(value = "/testServletAPI")
+public String testServletAPI(HttpServletRequest httpServletRequest) {
+    httpServletRequest.setAttribute("testScope", "hello, servletAPI");
+    return "success";
+}
+```
+
+前端获取共享参数：
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>success</h1>
+    <h2 th:text="${testScope}"></h2>
+</body>
+</html>
+```
+
+### 使用`ModelAndView`向`request`域对象共享数据
+
+```html
+<a th:href="@{/testModelAndView}">测试使用ModelAndView向request域对象共享数据</a><br/>
+```
+
+```java
+@RequestMapping(value = "/testModelAndView")
+public ModelAndView testModelAndView() {
+	ModelAndView modelAndView = new ModelAndView();
+    modelAndView.addObject("testScope", "Hello Model And View!!!");
+    modelAndView.setViewName("success");
+    return modelAndView;
+}
+```
+
+### 使用`	Model`向`request`域对象共享数据
+
+```java
+@RequestMapping(value = "/testModel")
+public String testModel(Model model) {
+    model.addAttribute("testScope", "Hello Model!!!");
+    return "success";
+}
+```
+
+### 使用`	map`向`request`域对象共享数据
+
+```java
+@RequestMapping(value = "/testMap")
+public String testMap(Map map) {
+    map.put("testScope", "Hello Map!!!");
+    return "success";
+}
+```
+
+### 使用`	ModelMap`向`request`域对象共享数据
+
+```java
+@RequestMapping(value = "/testModelMap")
+public String testModelMap(ModelMap modelMap) {
+    modelMap.addAttribute("testScope", "Hello ModelMap!!!");
+    return "success";
+}
+```
+
+### `Model、ModelMap、Map`三者之间的关系
+
+三者其实本质上都是`BindingAwareModelMap`类型的。`Model Map ModelMap`都是接口，而它们的实现类都是通过`BindingAwareModelMap`实现的。并且加上`servletAPI`最终都会转化为`ModelAndView`。
+
+**<font color="red">通过源码可以看到程序先执行到`DispatcherServlet`调用了`handle()`方法，然后调用了控制器方法。【所有的其实底层都去创建了`ModelAndView`，包括`servletAPI ModelAndView Model Map ModelMap`】</font>**
+
+### 向`session`域共享数据
+
+```java
+@RequestMapping(value = "/testSession")
+public String testSession(HttpSession httpSession) {
+    httpSession.setAttribute("testScope", "Hello Session!!!");
+    return "success";
+}
+```
+
+### 向`application`域共享数据
+
+```java
+@RequestMapping(value = "/testApplication")
+public String testApplication(HttpSession httpSession) {
+    ServletContext servletContext = httpSession.getServletContext();
+    servletContext.setAttribute("testScope", "Hello Application!!!");
+    return "success";
+}
+```
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>success</h1>
+    <h2 th:text="${testScope}"></h2>
+    <h2 th:text="${session.testScope}"></h2>
+    <h2 th:text="${application.testScope}"></h2>
+</body>
+</html>
+```
+
+# 2022年07月01日
+
+## `SpringMVC`视图
+
+`SpringMVC`中的视图是`View`接口，视图的作用就是渲染数据，将模型`Model`中的数据展示给用户。`SpringMVC`视图的种类很多，默认有转发视图和重定向视图。当工程引入`JSTL`依赖时，转发视图会自动转换为`JSTLView`。若使用的视图技术为`Thymeleaf`，并且配置其相关视图解析器，则解析之后得到的是`ThymeleafView`。
+
+### `ThymeleafView`
+
+没有任何前后缀【`forward redirect`】，返回的就是一个字符串，因为我们设置了视图解析器，则会默认自动加上前后缀。会通过转发的方式实现视图跳转。称为跳转视图。
+
+```java
+@RequestMapping(value = "/")
+public String testIndex() {
+    return "index";
+}
+```
+
+### 转发视图
+
+`SpringMVC`默认的转发视图为：`InternalResourceView`，当控制器方法中所设置的视图名称以`forward:`为前缀时，创建`InternalResourceView`内部资源视图，此时视图名称不会被`SpringMVC`配置文件中所配置的视图解析器解析，而是会将前缀`forward:`去掉，剩余部门作为最终路径通过转发的方式实现跳转。
+
+```java
+@RequestMapping(value = "/")
+public String testIndex() {
+    return "forward:index";
+}
+```
+
+### 重定向视图
+
+`SpringMVC`默认的重定向视图为：`InternalResourceView`，当控制器方法中所设置的视图名称以`redirect:`为前缀时，创建`InternalResourceView`内部资源视图，此时视图名称不会被`SpringMVC`配置文件中所配置的视图解析器解析，而是会将前缀`redirect:`去掉，剩余部门作为最终路径通过重定向的方式实现跳转。
+
+```java
+@RequestMapping(value = "/")
+public String testIndex() {
+    return "redirect:index";
+}
+```
+
+### 视图控制器`view-controller`
+
+当控制器方法中，仅仅用来实现页面跳转，即只需设置视图名称时，可以将处理器方法使用`view-controller`标签进行表示。【为了避免控制器方法对应的映射失效，还需加上`<mvc:annotation-driven/>`】
+
+```xml
+<!--path:设置处理的请求地址 view-name:设置请求地址所对应的视图名称-->
+<mvc:view-controller path="/testView" view-name="success"></mvc:view-controller>
+```
+
+> 注：当`SpringMVC`中设置任何一个`view-controller`时，其它控制器中的请求映射将全部失效，此时需要在`SpringMVC`中的核心配置文件中设置开启`mvc`注解驱动的标签`<mvc:annotation-driven/>`
+
+```xml
+<mvc:view-controller path="/testViewController" view-name="success"/>
+<mvc:annotation-driven/>
+```
+
+## `Restful`
+
+### `Restful`简介
+
+`Restful`全称：`Representaional State Transfer`表现层资源状态转移。
+
+- 资源：资源是一种看待服务器的方式，即将服务器看作是由很多离散的资源组成。每个资源是服务器上一个可命名的抽象概念。因为资源是一个抽象的概念，所以它不仅仅能代表服务器文件系统中的一个文件、数据库中的一张表等等具体的东西，可以将资源设计的要多抽象有多抽象，只要想象力允许而且客户端应用开发者能够理解都可以当作资源。与面向对象设计类似，资源是以名词为核心来组织的，首先关注的是名词。一个资源可以由一个或者多个`URI`来标识。`URI`即是资源的名称，也是资源在`Web`上的地址。对某个资源感兴趣的客户端应用，可以通过资源的`URI`与其进行交互。
+- 资源的表数：资源的表数是一段对于资源在某个特定时刻的状态的描述。可以在客户端-服务器端之间转移（交换）。资源的表数可以有多种格式，例如`HTML/XML/JSON/纯文本/图片/视频/音频`等等。资源的表述格 式可以通过协商机制来确定。请求-响应方向的表述通常使用不同的格式。
+- 状态转移：状态转移指的是在客户端和服务端之间转移`transfer`代表资源状态的表述。通过转移和操作资源的表数，来简介实现操作资源的目的。
+
+### `Restful`的实现
+
+具体说，就是`HTTP`协议里面，四个表示操作方式的动词：`GET、POST、PUT、DELETE`。 它们分别对应四种基本操作：`GET`用来获取资源，`POST`用来新建资源，`PUT`用来更新资源，`DELETE`用来删除资源。 `REST`风格提倡`URL`地址使用统一的风格设计，从前到后各个单词使用斜杠分开，不使用问号键值对方式携带请求参数，而是将要发送给服务器的数据作为`URL`地址的一部分，以保证整体风格的一致性。
+
+| 操作     | 传统方式           | REST风格                  |
+| -------- | ------------------ | ------------------------- |
+| 查询操作 | `getUserById?id=1` | `user/1-->get`请求方式    |
+| 保存操作 | `saveUser`         | `user-->post`请求方式     |
+| 删除操作 | `deleteUser?id=1`  | `user/1-->delete`请求方式 |
+| 更新操作 | `updateUser`       | `user-->put`请求方式      |
+
+### `HiddenHttpMethodFilter`
+
+由于浏览器目前支持`GET/POST`两种请求方式，如果执意要发送`PUT/DELETES`的请求该如何发送呢？
+
+`SpringMVC`提供了`HiddenHttpMethodFilter`帮助我们将`POST`请求转换为`PUT/DELETE`请求，当然是有条件才可以处理的：
+
+> 1. 当前请求的请求方式必须为`post`
+> 2. 当前请求必须传输请求参数`_method`【就是你要转成什么？】
+
+满足以上条件，`HiddenHttpMethodFilter`过滤器就会将当前请求的请求方式转换为请求参数`_method`的值，因此请求参数`_method`的值才是最终的请求方式。
+
+我们前面也学习过一个过滤器就是编码过滤器`CharacterEncodingFilter`，我们需要将其放在比`HiddenHttpMethod`前面`CharacterEncodingFilter`才起作用。类比于`CharacterFilterEncoding`在`web.xml`中注册`HiddenMethodFilter`：
+
+```xml
+<filter>
+    <filter-name>HiddenHttpMethodFilter</filter-name>
+    <filter-class>org.springframework.web.filter.HiddenHttpMethodFilter</filter-class>
+</filter>
+<filter-mapping>
+    <filter-name>HiddenHttpMethodFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
+```
+
+**为什么`CharacterEncodingFilter`要放在前面呢？**因为我们知道这个过滤器的作用就是用来给请求参数设置编码的，所以需要放置在请求参数前面。正因如此，`HiddenHttpMethodFilter`它内部恰恰有一个获取请求参数的操作：
+
+```java
+String paramValue = request.getParameter(this.methodParam);
+```
+
+所以`CharacterEncodingFilter`需要放在前面，`HiddenHttpMethodFilter`需要放在后边。
+
+### `Restful`案例
+
+**要求实现对员工信息的增删查改。**
+
