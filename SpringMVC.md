@@ -1009,7 +1009,425 @@ String paramValue = request.getParameter(this.methodParam);
 
 所以`CharacterEncodingFilter`需要放在前面，`HiddenHttpMethodFilter`需要放在后边。
 
+使用时在前端这样使用即可：
+
+```html
+<form th:action="@{/user}" method="post">
+    <input type="hidden" name="_method" value="PUT">
+    用户名：<input type="text" name="username"><br/>
+    密码：<input type="password" name="passwprd"><br/>
+    <input type="submit" value="修改"/>
+</form>
+```
+
 ### `Restful`案例
 
 **要求实现对员工信息的增删查改。**
+
+# 2022年07月06日
+
+## 处理静态资源
+
+默认`Tomcat`是有一个`servlet`的，而因为我们还配置了一个`DispatcherServlet`所以会使用我们自己配置的，倘若开启这个`default-servlet-handler`则处理不了的资源就交给默认的`Servlet`。找得到使用的是：`RequestMappingHandlerMapping`找不到则使用的是`DefaultServletHttpRequestHandler`。
+
+```xml
+<mvc:default-servlet-handler/>
+```
+
+## `HttpMessageConverter`
+
+报文信息转换器，将请求报文转换为`Java`对象，或将`Java`对象转换为响应报文。`HttpMessageConverter`提供了两个注解和两个类型：`@RequestBody`还有`@ResponseBody`
+
+### `@RequestBody`
+
+`@RequestBody`可以获取请求体，需要在控制器方法设置一个形参，使用`@RequestBody`进行标识，当前请求的请求体就会为当前注解所标识的形参赋值。
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1>首页</h1>
+<form th:action="@{/testRequestBody}" method="post">
+    用户名：<input type="text" name="username">
+    密码：<input type="password" name="password">
+    <input type="submit" value="提交">
+</form>
+</body>
+</html>
+```
+
+```java
+package com.kk;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+public class HttpMessageConverterController {
+    @RequestMapping(value = "/testRequestBody")
+    public String testRequestBody(@RequestBody String requestBody) {
+        System.out.println("RequestBody: " + requestBody);
+        return "success";
+    }
+}
+```
+
+获取到结果：`RequestBody: username=Administrator&password=123`
+
+### `RequestEntity`
+
+`RequestEntity`封装请求报文的一种类型，需要在控制器方法的形参中设置该类型的形参，当前请求的请求报文就会赋值给形参，可以通过`getHeaders()`获取请求头信息，通过`getBody()`获取请求体信息。
+
+```java
+@RequestMapping(value = "/testRequestEntity")
+public String testRequestEntity(RequestEntity<String> requestEntity) {
+    System.out.println("requestEntity.getHeaders: " + requestEntity.getHeaders());
+    System.out.println("requestEntity.getBody: " + requestEntity.getBody());
+    System.out.println("requestEntity.getMethod: " + requestEntity.getMethod());
+    System.out.println("requestEntity.getType: " + requestEntity.getType());
+    System.out.println("requestEntity.getUrl: " + requestEntity.getUrl());
+    return "success";
+}
+```
+
+### `@ResponseBody`
+
+该注解用于将返回值直接作为响应报文响应给浏览器。
+
+```java
+@RequestMapping(value = "/testResponseBody")
+@ResponseBody
+public String testResponseBody() {
+    return "Hello ResponseBody";
+}
+```
+
+浏览器显示：`Hello ResponseBody`
+
+### `SpringMVC`处理`json`
+
+1. 导入`jackson`依赖
+
+   ```xml
+   <dependency>
+       <groupId>com.fasterxml.jackson.core</groupId>
+       <artifactId>jackson-databind</artifactId>
+       <version>2.9.0</version>
+   </dependency>
+   ```
+
+2. 开启注解启动，此时在`HandlerAdaptor`中会自动装配一个消息转换器：`Mappingjackson2HttpMessageConverter`可以将响应到浏览器的`Java`对象转换为`json`格式的字符串。
+
+   ```xml
+   <mvc:annotation-drivern/>
+   ```
+
+3. 此时直接使用`@ResponseBody`若返回一个对象直接返回`Json`格式的字符串
+
+   ```java
+   @RequestMapping(value = "/testResponseBodyAndJackson")
+   @ResponseBody
+   public User testResponseBodyAndJackson() {
+       return new User("张三", 188);
+   }
+   ```
+
+   ```java
+   {
+     "name": "张三",
+     "age": 188
+   }
+
+### `SpringMVC`处理`Ajax`
+
+记得重新`clean`下：
+
+```html
+<div id="app">
+    <a th:href="@{/testAjax}" @click="testAjax">testAjax</a><br>
+</div>
+<script type="text/javascript" th:src="@{/static/js/vue.js}"></script>
+<script type="text/javascript" th:src="@{/static/js/axios.min.js}"></script>
+<script type="text/javascript">
+    var vue = new Vue({
+        el:"#app",
+        methods:{
+            testAjax:function (event) {
+                axios({
+                    method:"post",
+                    url:event.target.href,
+                    params:{
+                        username:"admin",
+                        password:"123456"
+                    }
+                }).then(function (response) {
+                    alert(response.data);
+                });
+                event.preventDefault();
+            }
+        }
+    });
+</script>
+```
+
+```java
+@RequestMapping(value = "/testAjax")
+@ResponseBody
+public String testAjax(String username, String password) {
+    System.out.println("username: " + username + "password: " + password);
+    return "Hello Axios Ajax";
+}
+```
+
+### `@RestController`
+
+该注解其实就是`@RquestMapping`和`@ResponseBody`两个注解的复合注解。
+
+### `@ResponseEntity`
+
+用于控制器方法的返回值类型，该控制器方法的返回值就是响应到浏览器的响应报文。
+
+## 文件上传和下载
+
+使用`ResponseEntity`访问某`URL`路径，下载某个文件：
+
+```java
+@RequestMapping(value = "/testResponseEntity")
+@ResponseBody
+public ResponseEntity<byte[]> testResponseEntity(HttpSession httpSession) {
+    ServletContext servletContext = httpSession.getServletContext();
+    String realPath = servletContext.getRealPath("/static/img/1.jpg");
+    //从磁盘中读到内存 ---> 字节输入流
+    FileInputStream fileInputStream = null;
+    ResponseEntity<byte[]> responseEntity  = null;
+    try {
+        fileInputStream = new FileInputStream(realPath);
+        //获取文件有多少个字节可以读取，缓存读入，一口气直接读
+        byte[] bytes = new byte[fileInputStream.available()];
+        fileInputStream.read(bytes);
+        //打开路径设置文件下载 ---> 设置响应头信息
+        MultiValueMap<String, String> headers = new HttpHeaders();
+        //设置下载方式以及下载后的文件名
+        headers.add("Content-Disposition", "attachment;filename=picture1.jpg");
+        //设置响应状态码
+        HttpStatus httpStatus = HttpStatus.OK;
+        //返回下载 ---> 字节下载
+        responseEntity = new ResponseEntity<byte[]>(bytes, headers, httpStatus);
+    } catch (FileNotFoundException e) {
+        e.printStackTrace();
+    } catch (IOException e) {
+        e.printStackTrace();
+    } finally {
+        if(fileInputStream != null) {
+            try {
+                fileInputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    return responseEntity;
+}
+```
+
+若是文件上传，需要在`form`表单指定为`post`并且添加属性：`enctype="multipart/form-data"`。`SpringMVC`将上传的文件封装到`MultipartFile`对象中，通过此对象可以获取文件相关信息。
+
+1. 添加文件上传的依赖
+
+   ```xml
+   <dependency>
+       <groupId>commons-fileupload</groupId>
+       <artifactId>commons-fileupload</artifactId>
+       <version>1.3.1</version>
+   </dependency>
+   ```
+
+2. 在`applicationContext.xml`配置文件中添加文件解析器配置，因为只有通过文件解析器的解析才能将文件转换为`MultipartFile`对象
+
+   ```xml
+   <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"/>
+   ```
+
+3. 控制器方法处理上传过程
+
+   ```java
+   @RequestMapping(value = "/testCommonsFileUpload")
+   public String testMultipartFile(MultipartFile multipartFile, HttpSession httpSession) throws IOException {
+       //非常简单：获取名字然后改名然后判断文件夹，通过 multipartFile 放进去就可以了
+       //获取上传的文件信息
+       String fileName = multipartFile.getOriginalFilename();
+       //自定义文件名
+       String copyName = fileName.substring(fileName.lastIndexOf('.'));
+       fileName = UUID.randomUUID().toString() + copyName;
+       //存储到当前路径中
+       ServletContext servletContext = httpSession.getServletContext();
+       String realPath = servletContext.getRealPath("/static/img");
+       File file = new File(realPath);
+       //如果不存在则新建文件夹
+       if(!file.exists()) file.mkdir();
+       String finalPath = realPath + File.separator + fileName;
+       //上传到服务器
+       multipartFile.transferTo(new File(finalPath));
+       return "success";
+   }
+
+4. 测试用的前端页面
+
+   ```html
+   <form th:action="@{/testCommonsFileUpload}" method="post" enctype="multipart/form-data">
+       头像：<input type="file" name="multipartFile"><br>
+       <input type="submit" value="上传">
+   </form>
+   ```
+
+**然后你可以在`target`文件夹中找到上传的文件。**
+
+## 拦截器
+
+如何声明拦截器：
+
+```xml
+<bean id="myFirstInterceptor" class="com.kk.config.MyFirstInterceptor"/>
+<mvc:interceptors>
+    <mvc:interceptor>
+        <mvc:mapping path="/**"/>
+        <mvc:exclude-mapping path="/testRequestEntity"/>
+        <ref bean="myFirstInterceptor"/>
+    </mvc:interceptor>
+</mvc:interceptors>
+```
+
+或者可以在拦截器上面加`@Component`注解，然后在配置文件中使用`<ref bean=""/>`也可以。
+
+拦截器中有三个抽象方法：`preHandle postHandle afterCompletion`
+
+- `preHandle`：控制器方法执行之前执行`preHandle()`，其`boolean`类型的返回值表示是否拦截或放行，返回`true`为放行，即调用控制器方法；返回`false`表示拦截，即不调用控制器方法
+- `postHanlde`：控制器方法执行之后执行`postHandle()`
+- `afterCompletion`：处理完视图和模型数据，渲染视图完毕之后执行`afterComplation()`
+
+### 多个拦截器的执行顺序
+
+如果所有的`preHandle()`返回的都是`true`：
+
+> 此时拦截器会按照在`applicationContext.xml`配置的顺序执行，并且其中的`preHandle()`是顺序执行的而`postHandle()`和`afterCompletion()`是反序执行的，比如有`1 2 3`号拦截器，则拦截器的序号为：`1 2 3 3 2 1 3 2 1`
+
+如果有一个拦截器返回了`false`：
+
+> 此时拦截器只会执行返回`false`之前的`preHandle()`以及`afterCompletion()`，`postHandle()`因为压根不会执行控制器方法，所以是一个都不会执行的。
+>
+> ```
+> firstPreHandle
+> secondPreHandle
+> secondafterCompletion
+> firstafterCompletion
+> ```
+
+## 异常处理器
+
+`SpringMVC`提供了一个处理异常控制器方法执行过程中所出现的异常的接口：`HandlerExceptionResolver`【处理异常解析器-异常处理器】，`HandlerExceptionResolver`接口的实现类有：`DefaultHandlerExceptionResolver`和`SimpleMappingExceptionResolver`【自定义异常处理器】。
+
+`SimpleMappingExceptionResolver`自定义异常处理方式：
+
+```xml
+<bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+    <property name="exceptionMappings">
+        <props>
+            <!--设置发生异常时跳转的视图-->
+            <prop key="java.lang.ArithmeticException">error</prop>
+        </props>
+    </property>
+    <!--设置发生异常时的设置属性名，将出现的异常信息在请求域中进行共享-->
+    <property name="exceptionAttribute" value="ex"/>
+</bean>
+```
+
+基于注解的异常处理：`@ControllerAdvice`以及`@ExceptionHandler`
+
+```java
+package com.kk.controller;
+
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+@ControllerAdvice
+public class HandlerExceptionController {
+    @ExceptionHandler(value = {ArithmeticException.class, NullPointerException.class})
+    public String handlerExceptionResolverTest(Exception exception, Model model) {
+        model.addAttribute("exception", exception);
+        return "error";
+    }
+}
+```
+
+## 注解配置`SpringMVC`
+
+## `SpringMVC`执行流程
+
+1. 用户向服务器发送请求，请求被`SpringMVC`的前端控制器`DispatcherServlet`所捕获
+
+2. `DispatcherServlet`对请求的`URL`进行解析，得到请求资源标识符`URI`，然后判断请求`URI`对应的映射，分映射存在与不存在两种情况
+
+   - 不存在：
+
+     - 判断是否配置了`<mvc:default-servlet-handler/>`
+       - 如果没有配置，则前端控制器直接报映射查找不到，客户端展示`404`错误
+       - 如果配置了，则访问资源，一般为静态资源，找不到则客户端展示`404`错误，找到直接返回
+
+   - 存在：
+
+     3. 根据该`URI`，调用`HandlerMapping`处理器映射器查找获取该`Handler`配置的所有相关的对象【包括`Handler`对象以及`Handler`对象对应的拦截器】，最后以`HandlerExecutionChain`处理器执行链对象的形式返回给前端控制器
+
+     4. `DispatcherServlet`根据获得的处理器执行链对象`HandlerExecutionChain`，选择一个合适的处理器适配器`HandlerApdater`去处理
+
+     5. 如果成功获取处理器适配器`HandlerAdapter`，此时将开始执行拦截器的`preHandler(..)`方法【正向】
+
+     6. 提取`Request`请求中的模型数据，将其填充进处理器`Handler`当作参数，然后开始执行`Handler`方法，这个`Handler`方法就是我们常说的控制器方法，处理请求。在填充`Handler`的入参过程中根据自身配置`Spring`将帮你做一些额外的工作：
+
+        - `HttpMessageConverter`：将请求消息如`json、xml`等数据转换成一个对象，将对象转换为指定的响应信息`@RequestBody @ResponseBody RequestEntity ResponseEntity`
+
+        - 数据转换：对请求消息进行数据转换。如`String`转换成`Integer Double`等
+
+        - 数据格式化：对请求消息进行数据格式化。如将字符串转换成格式化数字或格式化日期等
+
+        - 数据验证：验证数据的有效性【长度、格式等】，验证结果存储到`BindingResult`或`Error`中
+
+     7. `Handler`执行完成之后，向`DispatcherServlet`返回一个`ModelAndView`对象
+     8. 此时将开始执行拦截器的`postHandle(..)`方法【逆向】
+     9. 根据返回的`ModelAndView`【此时会判断是否存在异常：如果存在异常则执行`HandlerExceptionResolver`进行异常处理】选择一个合适的`ViewResolver`进行试图解析，根据`Model`和`View`来渲染视图
+     10. 渲染视图完毕执行拦截器中的`afterCompletion(..)`方法【逆向】
+     11. 将渲染结果返回给客户端
+
+## `SpringMVC`常用组件
+
+- `DispatcherServlet`：前端控制器，不需要工程师开发，由框架提供
+
+  作用：统一处理请求和响应，是整个流程控制的中心，由它调用其它组件处理用户的请求
+
+- `HandlerMapping`：处理器映射器，不需要工程师开发，由框架提供
+
+  作用：根据请求的`URL、Method`等信息查找处理器即控制器`handler`，即控制器方法
+
+- `Handler`：处理器，需要工程师开发
+
+  作用：在`DispatcherServlet`控制下处理器对具体的用户请求进行处理
+
+- `HandlerAdaptor`：处理器适配器，不需要工程师开发，由框架提供
+
+  作用：通过处理器适配器对控制器方法进行执行
+
+- `ViewResolver`：视图解析器，不需要工程师开发，由框架提供
+
+  作用：进行视图解析，得到响应的视图，例如：`ThymeleafView InternalResourceView RedirectView`
+
+- `View`：视图
+
+  作用：将模型数据通过页面展示给用户
+
+**【前端控制器、处理器映射器、处理器适配器、视图解析器、处理器、视图】**
 
